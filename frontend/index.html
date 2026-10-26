@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart College Management System</title>
+<style>
+ body{font-family:Arial,sans-serif;margin:0;background:#f4f6fb;color:#222}
+ header{background:#3b5bdb;color:#fff;padding:14px 20px}
+ nav button{margin:10px 4px 0;padding:8px 14px;border:0;border-radius:6px;cursor:pointer}
+ nav button.on{background:#3b5bdb;color:#fff}
+ main{padding:14px 20px}.box{background:#fff;padding:14px;border-radius:8px;margin-bottom:14px;overflow-x:auto}
+ table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #ddd;padding:7px;text-align:left}
+ input,select{padding:7px;margin:3px}button.go{background:#3b5bdb;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+ .stats{display:flex;gap:12px;flex-wrap:wrap}.stat{background:#fff;padding:14px;border-radius:8px;min-width:140px}.stat b{font-size:24px;display:block}
+header h2{margin:0}
+ nav{padding:0 16px}
+</style></head><body>
+<header><h2>🎓 Smart College Management System</h2></header>
+<nav id="nav"></nav><main id="app"></main>
+<script>
+const tabs=["Dashboard","Students","Courses","Attendance","Fees","All Data"]; let tab="Dashboard";
+const api=(u,m="GET",b)=>fetch("/api/"+u,{method:m,headers:{"Content-Type":"application/json"},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+const table=rows=>rows.length?`<table><tr>${Object.keys(rows[0]).map(k=>`<th>${k}</th>`).join("")}</tr>${rows.map(r=>`<tr>${Object.values(r).map(v=>`<td>${v??""}</td>`).join("")}</tr>`).join("")}</table>`:"No data";
+const val=id=>document.getElementById(id).value;
+const opts=(rows,id,label)=>rows.map(r=>`<option value="${r[id]}">${r[label]}</option>`).join("");
+async function render(){
+ document.getElementById("nav").innerHTML=tabs.map(t=>`<button class="${t==tab?"on":""}" onclick="tab='${t}';render()">${t}</button>`).join("");
+ const a=document.getElementById("app");
+ if(tab=="Dashboard"){const d=await api("dashboard");
+  a.innerHTML=`<div class="stats">${Object.entries(d).map(([k,v])=>`<div class="stat"><b>${v}</b>${k}</div>`).join("")}</div>`}
+ if(tab=="Students"){const [s,d]=await Promise.all([api("students"),api("departments")]);
+  a.innerHTML=`<div class="box"><input id="roll" placeholder="Roll no"><input id="nm" placeholder="Name"><input id="em" placeholder="Email">
+   <input id="yr" type="number" min="1" max="4" placeholder="Year"><input id="tf" type="number" placeholder="Total fee"><select id="dp">${opts(d,"dept_id","dept_name")}</select>
+   <button class="go" onclick="addStudent()">Add Student</button></div>
+   <div class="box">${table(s.map(x=>({ID:x.student_id,Roll:x.roll_no,Name:x.name,Dept:x.dept_name,Year:x.year,Action:`<button onclick="del(${x.student_id})">Delete</button>`})))}</div>`}
+ if(tab=="Courses"){const [c,d,s]=await Promise.all([api("courses"),api("departments"),api("students")]);
+  a.innerHTML=`<div class="box"><b>Add course</b><br><input id="cn" placeholder="Course name"><input id="cr" type="number" placeholder="Credits"><select id="cd">${opts(d,"dept_id","dept_name")}</select>
+   <button class="go" onclick="addCourse()">Add</button></div>
+   <div class="box"><b>Enroll student</b><br><select id="es">${opts(s,"student_id","name")}</select><select id="ec">${opts(c,"course_id","course_name")}</select>
+   <button class="go" onclick="enroll()">Enroll</button></div><div class="box">${table(c)}</div>`}
+ if(tab=="Attendance"){const [s,c,r]=await Promise.all([api("students"),api("courses"),api("attendance")]);
+  a.innerHTML=`<div class="box"><select id="as">${opts(s,"student_id","name")}</select><select id="ac">${opts(c,"course_id","course_name")}</select>
+   <input id="ad" type="date" value="${new Date().toISOString().slice(0,10)}"><select id="st"><option>Present</option><option>Absent</option></select>
+   <button class="go" onclick="mark()">Mark</button></div><div class="box"><b>Attendance %</b>${table(r)}</div>`}
+ if(tab=="Fees"){const [s,f]=await Promise.all([api("students"),api("fees")]);
+  a.innerHTML=`<div class="box"><select id="fs">${opts(s,"student_id","name")}</select><input id="fa" type="number" placeholder="Amount">
+   <button class="go" onclick="pay()">Record Payment</button></div><div class="box">${table(f)}</div>`}
+ if(tab=="All Data"){const d=await api("raw-db");
+  a.innerHTML=Object.entries(d).map(([tableName,rows])=>`
+   <div class="box">
+     <h3 style="margin-top:0; text-transform:capitalize;">📁 Table: ${tableName}</h3>
+     ${table(rows)}
+   </div>
+  `).join("");}
+}
+const done=r=>{if(r.error)alert(r.error);render()};
+const addStudent=()=>api("students","POST",{roll_no:val("roll"),name:val("nm"),email:val("em"),year:+val("yr"),total_fee:+val("tf"),dept_id:+val("dp")}).then(done);
+const del=id=>api("students/"+id,"DELETE").then(done);
+const addCourse=()=>api("courses","POST",{course_name:val("cn"),credits:+val("cr")||3,dept_id:+val("cd")}).then(done);
+const enroll=()=>api("enroll","POST",{student_id:+val("es"),course_id:+val("ec")}).then(done);
+const mark=()=>api("attendance","POST",{student_id:+val("as"),course_id:+val("ac"),att_date:val("ad"),status:val("st")}).then(done);
+const pay=()=>api("fees","POST",{student_id:+val("fs"),amount:+val("fa")}).then(done);
+render();
+</script></body></html>
