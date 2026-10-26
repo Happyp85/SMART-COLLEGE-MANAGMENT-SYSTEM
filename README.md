@@ -122,24 +122,6 @@ The SQLite database contains six related tables:
 
 The schema includes foreign keys, unique constraints, and checks for valid years, attendance statuses, and positive payment amounts.
 
-## 🔌 API Endpoints
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/api/dashboard` | Get dashboard totals |
-| `GET` | `/api/departments` | List departments |
-| `GET` | `/api/students` | List students |
-| `POST` | `/api/students` | Add a student |
-| `DELETE` | `/api/students/<id>` | Delete a student |
-| `GET` | `/api/courses` | List courses and enrollment counts |
-| `POST` | `/api/courses` | Add a course |
-| `POST` | `/api/enroll` | Enroll a student in a course |
-| `GET` | `/api/attendance` | Get attendance summaries |
-| `POST` | `/api/attendance` | Record or update attendance |
-| `GET` | `/api/fees` | Get paid and pending fee totals by student |
-| `POST` | `/api/fees` | Record a fee payment |
-| `GET` | `/api/raw-db` | View rows from all application tables |
-
 ### Example: Add a Student
 
 Send a `POST` request to `/api/students` with a JSON body:
@@ -160,17 +142,6 @@ A successful request returns:
 ```json
 {"ok": true}
 ```
-
-## 🖼️ Screenshots
-
-Screenshots are not included in the supplied project files. After capturing them, you can add images here for:
-
-- Dashboard
-- Student management
-- Course enrollment
-- Attendance and fees
-- Database explorer
-
 ## 🔐 Notes and Limitations
 
 This is an educational prototype, **not a production-ready college administration system**.
